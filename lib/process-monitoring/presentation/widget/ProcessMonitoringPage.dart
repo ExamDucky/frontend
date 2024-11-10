@@ -23,6 +23,13 @@ class ProcessMonitoringPage extends StatefulWidget {
 
 class _ProcessMonitoringPageState extends State<ProcessMonitoringPage>
     with TimerUtils {
+  int index = 0;
+  List<String> scList = [
+    "assets/images/sc1.png",
+    "assets/images/sc2.png",
+    "assets/images/sc3.png"
+  ];
+
   @override
   Widget build(BuildContext context) {
     return widget.isExamStarted
@@ -70,20 +77,33 @@ class _ProcessMonitoringPageState extends State<ProcessMonitoringPage>
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (index != scList.length && index > 0) {
+                              setState(() {
+                                index--;
+                              });
+                            }
+                          },
                           icon: Icon(
                             Icons.arrow_circle_left,
                             color: Theme.of(context).primaryColor,
                             size: 50,
                           ),
                         ),
-                        Image.network(
-                          "https://static.vecteezy.com/system/resources/thumbnails/013/226/049/small_2x/chain-link-icon-isolated-on-circle-background-vector.jpg",
+                        Image.asset(
+                          key: ValueKey(index),
+                          scList[index],
                           width: 700,
                           height: 500,
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (index != 0 && index < scList.length) {
+                              setState(() {
+                                index++;
+                              });
+                            }
+                          },
                           icon: Icon(
                             Icons.arrow_circle_right,
                             color: Theme.of(context).primaryColor,

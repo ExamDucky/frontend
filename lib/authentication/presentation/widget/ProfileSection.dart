@@ -1,9 +1,18 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:smart_usb_desktop/main.dart';
 import 'package:smart_usb_desktop/shared/presentation/widget/PrimaryButton.dart';
 
 class ProfileSection extends StatefulWidget {
-  const ProfileSection({super.key});
+  const ProfileSection({
+    super.key,
+    required this.setIsProfessorActive,
+    required this.email,
+    required this.fullName,
+  });
+
+  final void Function(bool) setIsProfessorActive;
+  final String email;
+  final String fullName;
 
   @override
   State<ProfileSection> createState() => _ProfileSectionState();
@@ -30,11 +39,11 @@ class _ProfileSectionState extends State<ProfileSection> {
               size: 80,
             ),
             Text(
-              "John Doe",
+              widget.fullName,
               style: Theme.of(context).textTheme.labelLarge,
             ),
             Text(
-              "john.doe@email.com",
+              widget.email,
               style: Theme.of(context).textTheme.labelLarge,
             ),
           ],
@@ -42,7 +51,10 @@ class _ProfileSectionState extends State<ProfileSection> {
         Padding(
           padding: const EdgeInsets.only(bottom: 40.0),
           child: PrimaryButton(
-            onPressed: () {},
+            onPressed: () async {
+              await storage.delete(key: "token");
+              widget.setIsProfessorActive(false);
+            },
             text: "log out",
             width: 300,
           ),

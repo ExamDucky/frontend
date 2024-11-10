@@ -24,7 +24,7 @@ class ScreenshotsCell extends StatelessWidget with ProcessMonitoringUtils {
               children: [
                 SizedBox(
                   height: 150,
-                  child: Image.network(imageList.first),
+                  child: Image.asset(imageList.first),
                 ),
                 Hyperlink(
                   onTap: () {

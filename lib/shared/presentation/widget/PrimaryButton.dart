@@ -50,15 +50,15 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                 width: widget.width != null ? widget.width! - 10 : null,
                 height: widget.height - 10,
                 child: InkWell(
-                  onTap: () {
-                    widget.onPressed?.call();
+                  onTap: () async {
                     setState(() {
                       isClicked = true;
                     });
-                    Future.delayed(const Duration( milliseconds: 150), () {
+                    await Future.delayed(const Duration( milliseconds: 150), () {
                       setState(() {
                         isClicked = false;
                       });
+                      widget.onPressed?.call();
                     });
                   },
                   child: Container(

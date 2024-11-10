@@ -18,11 +18,18 @@ class TestInformationItem extends StatelessWidget {
             child: SizedBox(
                 width: 22,
                 height: 22,
-                child: Image.asset(imagePath, color: Theme.of(context).primaryColor,)),
+                child: Image.asset(
+                  imagePath,
+                  color: Theme.of(context).primaryColor,
+                )),
           ),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleSmall,
+          SizedBox(
+            width: 200,
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall,
+              overflow: TextOverflow.ellipsis,
+            ),
           )
         ],
       ),

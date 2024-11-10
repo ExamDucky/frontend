@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:smart_usb_desktop/device-communication/DeviceConnectingPage.dart';
+import 'package:smart_usb_desktop/shared/misc/Config.dart';
 import 'package:smart_usb_desktop/shared/presentation/widget/DashboardNavigation.dart';
 import 'package:smart_usb_desktop/shared/presentation/widget/MainLayout.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:smart_usb_desktop/theme.dart';
+
+
+String? getCurrentProfileURL() {
+  return config[activeProfile.name]?['domain'];
+}
+
+const storage = FlutterSecureStorage();
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +39,7 @@ void main() async {
     print("Error initializing window manager: $e");
   }
 
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatefulWidget {

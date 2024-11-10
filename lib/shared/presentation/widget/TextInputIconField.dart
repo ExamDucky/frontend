@@ -11,7 +11,8 @@ class TextInputIconField extends StatelessWidget {
       this.onChanged,
       this.enabled = true,
       this.height = 50,
-      this.width = 300});
+      this.onTap,
+      this.width = 300, this.onIconTap});
 
   final String labelText;
   final bool obscureText;
@@ -20,8 +21,10 @@ class TextInputIconField extends StatelessWidget {
   final bool enabled;
   final IconData icon;
   final void Function(String)? onChanged;
+  final void Function()? onTap;
   final double? width;
   final double? height;
+  final void Function()? onIconTap;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +32,7 @@ class TextInputIconField extends StatelessWidget {
       width: width,
       height: height,
       child: TextFormField(
+        onTap: onTap,
         cursorColor: Theme.of(context).primaryColor,
         validator: validator,
         controller: controller,
@@ -60,7 +64,7 @@ class TextInputIconField extends StatelessWidget {
             fillColor: Theme.of(context).cardColor,
             hoverColor: Colors.transparent,
             suffixIcon: IconButton(
-                onPressed: () {},
+                onPressed: onIconTap,
                 icon: Icon(
                   icon,
                   color: Theme.of(context).primaryColor,

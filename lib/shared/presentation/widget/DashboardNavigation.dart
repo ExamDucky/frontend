@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_usb_desktop/authentication/presentation/widget/AuthPage.dart';
 import 'package:smart_usb_desktop/exam-management/presentation/widget/ExamManagementPage.dart';
 import 'package:smart_usb_desktop/process-monitoring/presentation/widget/ProcessMonitoringPage.dart';
@@ -8,7 +9,7 @@ import 'package:smart_usb_desktop/shared/presentation/widget/NavigationButton.da
 import 'package:smart_usb_desktop/shared/view-models/DashboardButtonModel.dart';
 import 'package:smart_usb_desktop/test-management/presentation/widget/TestManagementPage.dart';
 
-class DashboardNavigation extends StatefulWidget {
+class DashboardNavigation extends ConsumerStatefulWidget {
   const DashboardNavigation(
       {super.key,
       required this.isGalleryOpened,
@@ -18,12 +19,11 @@ class DashboardNavigation extends StatefulWidget {
   final void Function(bool) setIsGalleryOpen;
 
   @override
-  State<DashboardNavigation> createState() => _DashboardNavigationState();
+  ConsumerState<DashboardNavigation> createState() =>
+      _DashboardNavigationState();
 }
 
-class _DashboardNavigationState extends State<DashboardNavigation> {
-  PageType selectedPageType = PageType.Authentication;
-  bool isProfessorValidated = true;
+class _DashboardNavigationState extends ConsumerState<DashboardNavigation> {
   bool isExamStarted = false;
   String examStartedAt = "";
   int examRemainingTimeInSeconds = 0;
@@ -57,85 +57,45 @@ class _DashboardNavigationState extends State<DashboardNavigation> {
   }
 
   @override
-  void initState() {
+  Widget build(BuildContext context) {
+    bool isProfessorValidated = ref.watch(isProfessorValidatedProvider);
+
+    PageType selectedPageType = ref.watch(selectedPageTypeProvider);
+
     dashboardButtonModels = [
       DashboardButtonModel(
-          imagePath: isProfessorValidated ? "assets/images/document.png" : null,
-          isSelected: false,
-          pageType: PageType.TestManagement),
+        imagePath: isProfessorValidated ? "assets/images/document.png" : null,
+        isSelected: selectedPageType == PageType.TestManagement,
+        pageType: PageType.TestManagement,
+      ),
       DashboardButtonModel(
-          imagePath: isProfessorValidated ? "assets/images/grading.png" : null,
-          isSelected: false,
-          pageType: PageType.ExamManagement),
+        imagePath: isProfessorValidated ? "assets/images/grading.png" : null,
+        isSelected: selectedPageType == PageType.ExamManagement,
+        pageType: PageType.ExamManagement,
+      ),
       DashboardButtonModel(
-          imagePath:
-              isProfessorValidated ? "assets/images/visibility.png" : null,
-          isSelected: false,
-          pageType: PageType.ProcessMonitoring),
-      const DashboardButtonModel(
-          imagePath: "assets/images/person.png",
-          isSelected: true,
-          pageType: PageType.Authentication),
+        imagePath: isProfessorValidated ? "assets/images/visibility.png" : null,
+        isSelected: selectedPageType == PageType.ProcessMonitoring,
+        pageType: PageType.ProcessMonitoring,
+      ),
+      DashboardButtonModel(
+        imagePath: "assets/images/person.png",
+        isSelected: selectedPageType == PageType.Authentication,
+        pageType: PageType.Authentication,
+      ),
     ];
-    super.initState();
-  }
 
-  Widget choosePage() {
-    switch (selectedPageType) {
-      case PageType.Authentication:
-        return const AuthPage();
-      case PageType.TestManagement:
-        return const TestManagementPage();
-      case PageType.ExamManagement:
-        return ExamManagementPage(
-          examStartedAt: examStartedAt,
-          examRemainingTime: examRemainingTimeInSeconds,
-          isExamStarted: isExamStarted,
-          examTotalTime: examTotalTimeInSeconds,
-          startTimer: startTimer,
-          setStartedAtMessage: (String newValue) {
-            setState(() {
-              examStartedAt = newValue;
-            });
-          },
-          startExam: () {
-            setState(() {
-              isExamStarted = true;
-            });
-          },
-        );
-      case PageType.ProcessMonitoring:
-        return ProcessMonitoringPage(
-          setIsGalleryOpen: widget.setIsGalleryOpen,
-          isGalleryOpened: widget.isGalleryOpened,
-          isExamStarted: isExamStarted,
-          examRemainingTime: examRemainingTimeInSeconds,
-          examStartedAt: examStartedAt,
-        );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Stack(
       children: [
         Row(
           children: [
             for (int i = 0; i < dashboardButtonModels.length; i++)
               NavigationButton(
-                  onPressed: isProfessorValidated
+                  onPressed: ref.watch(isProfessorValidatedProvider)
                       ? () {
                           setState(() {
-                            selectedPageType =
+                            ref.read(selectedPageTypeProvider.notifier).state =
                                 dashboardButtonModels[i].pageType;
-                            for (int j = 0;
-                                j < dashboardButtonModels.length;
-                                j++) {
-                              dashboardButtonModels[j] = DashboardButtonModel(
-                                  pageType: dashboardButtonModels[j].pageType,
-                                  imagePath: dashboardButtonModels[j].imagePath,
-                                  isSelected: i == j);
-                            }
                           });
                         }
                       : null,
@@ -155,7 +115,47 @@ class _DashboardNavigationState extends State<DashboardNavigation> {
                 border:
                     Border.all(width: 3, color: Theme.of(context).primaryColor),
                 borderRadius: const BorderRadius.all(Radius.circular(20))),
-            child: choosePage(),
+            child: IndexedStack(
+              index: dashboardButtonModels
+                  .indexWhere((button) => button.pageType == selectedPageType),
+              children: [
+                const TestManagementPage(),
+                ExamManagementPage(
+                  endExam: () {
+                    setState(() {
+                      isExamStarted = false;
+                    });
+                  },
+                  cancelTimer: () {
+                    _timer?.cancel();
+                  },
+                  examStartedAt: examStartedAt,
+                  examRemainingTime: examRemainingTimeInSeconds,
+                  isExamStarted: isExamStarted,
+                  examTotalTime: examTotalTimeInSeconds,
+                  startTimer: startTimer,
+                  setStartedAtMessage: (String newValue) {
+                    setState(() {
+                      examStartedAt = newValue;
+                    });
+                  },
+                  startExam: () {
+                    setState(() {
+                      isExamStarted = true;
+                    });
+                  },
+                ),
+                ProcessMonitoringPage(
+                  key: ValueKey(1),
+                  setIsGalleryOpen: widget.setIsGalleryOpen,
+                  isGalleryOpened: widget.isGalleryOpened,
+                  isExamStarted: isExamStarted,
+                  examRemainingTime: examRemainingTimeInSeconds,
+                  examStartedAt: examStartedAt,
+                ),
+                const Center(child: AuthPage()),
+              ],
+            ),
           ),
         ),
       ],

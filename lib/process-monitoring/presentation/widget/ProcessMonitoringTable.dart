@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_usb_desktop/exam-management/presentation/utils/DirectoryHandlingUtils.dart';
+import 'package:smart_usb_desktop/process-monitoring/presentation/view-models/StudentAttemptModel.dart';
 import 'package:smart_usb_desktop/process-monitoring/presentation/view-models/StudentExamProcessMonitoringModel.dart';
 import 'package:smart_usb_desktop/process-monitoring/presentation/widget/BlacklistedProcessesCell.dart';
 import 'package:smart_usb_desktop/process-monitoring/presentation/widget/ScreenshotsCell.dart';
+
 
 class ProcessMonitoringTable extends StatefulWidget {
   const ProcessMonitoringTable({super.key, required this.setIsGalleryOpen});
@@ -13,61 +19,47 @@ class ProcessMonitoringTable extends StatefulWidget {
   State<ProcessMonitoringTable> createState() => _ProcessMonitoringTableState();
 }
 
-class _ProcessMonitoringTableState extends State<ProcessMonitoringTable> {
+
+
+class _ProcessMonitoringTableState extends State<ProcessMonitoringTable> with DirectoryHandlingUtils {
   List<StudentExamProcessMonitoringModel> studentsProcessMonitoring = [];
+  Timer? timer;
+  List<String> currentDirectories = [];
 
   @override
-  void didChangeDependencies() {
-    studentsProcessMonitoring = [
-      StudentExamProcessMonitoringModel(
-          blacklistedProcesses: BlacklistedProcessesCell(processesList: []),
-          latestScreenshot: ScreenshotsCell(
-            imageList: [],
-            setIsGalleryOpen: widget.setIsGalleryOpen,
-          ),
-          studentId: Text(
-            "2024/3804",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          macAddress: Text(
-            "01:23:45:67:89:ab",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          )),
-      StudentExamProcessMonitoringModel(
-          blacklistedProcesses: BlacklistedProcessesCell(
-              processesList: ["discord", "firefox", "chrome"]),
-          latestScreenshot: ScreenshotsCell(
-              imageList: [], setIsGalleryOpen: widget.setIsGalleryOpen),
-          studentId: Text(
-            "2024/3804",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          macAddress: Text(
-            "01:23:45:67:89:ab",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          )),
-      StudentExamProcessMonitoringModel(
-          blacklistedProcesses:
-              BlacklistedProcessesCell(processesList: ["discord"]),
-          latestScreenshot: ScreenshotsCell(imageList: [
-            "https://static.vecteezy.com/system/resources/thumbnails/013/226/049/small_2x/chain-link-icon-isolated-on-circle-background-vector.jpg"
-          ], setIsGalleryOpen: widget.setIsGalleryOpen),
-          studentId: Text(
-            "2024/3804",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          macAddress: Text(
-            "01:23:45:67:89:ab",
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ))
-    ];
-    super.didChangeDependencies();
+  void initState() {
+    timer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      var temp = await monitorNewDirectories(currentDirectories);
+      setState(() {
+        currentDirectories += temp;
+      });
+      List<StudentAttemptModel> model = [];
+      for (var path in currentDirectories) {
+        var m = await readFileProcessMonitoring("${path}\\info.txt", context);
+        if (m != null) {
+          model.add(m);
+        }
+      }
+      setState(() {
+        studentsProcessMonitoring = model.map((e) => StudentExamProcessMonitoringModel(
+            blacklistedProcesses: BlacklistedProcessesCell(processesList: e.blacklistedProcesses),
+            latestScreenshot: ScreenshotsCell(
+              imageList: e.latestScreenshot!,
+              setIsGalleryOpen: widget.setIsGalleryOpen,
+            ),
+            studentId: Text(
+              e.studentId,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            macAddress: Text(
+              e.macAddress,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ))).toList();
+      });
+    });
+    super.initState();
   }
 
   @override
